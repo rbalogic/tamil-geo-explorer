@@ -45,9 +45,9 @@ function App() {
           <h1>Tamil Geo Explorer - Pondicherry</h1>
           <p>
             This page will display an OpenStreetMap of Pondicherry with labels
-            in Tamil. To enable Tamil rendering, follow the steps in LEARN.md
-            to process the puducherry.osm.pbf file with the
-            openstreetmap-carto-tamil.lua script.
+            in Tamil. To enable Tamil rendering, follow the steps in <code>docs/TAMIL_OSM_GUIDE.md</code>
+            to process the <code>puducherry.osm.pbf</code> file with the
+            <code>openstreetmap-carto-tamil.lua</code> script.
           </p>
           <div
             id="map"
@@ -62,7 +62,7 @@ function App() {
             <br />
             2. Verify the map displays default OpenStreetMap tiles
             <br />
-            3. Process OSM data with Tamil names using the guide in LEARN.md
+            3. Process OSM data with Tamil names using the guide in <code>docs/TAMIL_OSM_GUIDE.md</code>
             <br />
             4. Serve the generated tiles and update the tile layer URL in the code
           </p>
@@ -80,7 +80,7 @@ function App() {
       <section id="next-steps">
         <div id="docs">
           <h2>Documentation</h2>
-          <p>Follow LEARN.md for the project workflow and GUIDES.md for background reference</p>
+          <p>Follow <code>docs/TAMIL_OSM_GUIDE.md</code> for the project workflow.</p>
           <ul>
             <li>
               <a

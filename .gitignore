@@ -24,10 +24,8 @@ dist-ssr
 *.sw?
 
 # Files for agents
-CLAUDE.md
-GUIDES.md
 LOG.md
-LEARN.md
+CLAUDE.md
 
-# Map files
-*.osm.pbf
+# References
+GUIDES.md
