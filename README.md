@@ -43,6 +43,10 @@ You can override that at runtime with `VITE_TILE_URL`.
 - `docs/TAMIL_OSM_GUIDE.md` - implementation notes about how the Tamil rendering works in this repo
 - `scripts/openstreetmap-carto-tamil.lua` - original minimal Tamil transform script used during early exploration
 
+## Screenshots
+<img width="1272" height="881" alt="Screenshot 2026-05-16 at 8 33 55 AM" src="https://github.com/user-attachments/assets/49195118-eb65-4758-9ec7-2e3b5de470f2" />
+
+
 ## Notes
 
 - `tile-style/data/` is intentionally ignored in Git because it contains downloaded Carto shapefiles that can exceed GitHub's file-size limits
