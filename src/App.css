@@ -1,13 +1,131 @@
-#center {
+:root {
+  --text-main: #1a1a1a;
+  --text-muted: #737373;
+  --bg-white: #ffffff;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --radius: 8px;
+}
+
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  background: #fdfdfd;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.viewer-root {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+/* Overlay UI Container */
+.overlay-ui {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
+  gap: 12px;
+}
 
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
+/* Compact Branding Card */
+.branding {
+  background: var(--bg-white);
+  padding: 16px 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.branding h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.branding p {
+  font-size: 0.8rem;
+  margin: 2px 0 0 0;
+  color: var(--text-muted);
+}
+
+/* Minimal Action Button */
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-white);
+  border: 1px solid rgba(0,0,0,0.05);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-main);
+  width: fit-content;
+}
+
+.btn-reset:hover {
+  background: #fafafa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.btn-reset:active {
+  transform: translateY(0);
+}
+
+/* Leaflet Attribution Cleanup */
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(4px);
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+  border-top-right-radius: 4px;
+  color: var(--text-muted) !important;
+}
+
+/* Popup Styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .overlay-ui {
+    top: auto;
+    bottom: 32px;
+    left: 20px;
+    right: 20px;
+    align-items: stretch;
+  }
+  
+  .btn-reset {
+    width: 100%;
+    justify-content: center;
   }
 }

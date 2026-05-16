@@ -5,53 +5,75 @@ import "./App.css";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+const PONDICHERRY_CENTER = [11.9416, 79.8083];
+const TILE_URL =
+  import.meta.env.VITE_TILE_URL ?? "http://localhost:8090/tile/{z}/{x}/{y}.png";
+
 function App() {
   const mapRef = useRef(null);
 
   useEffect(() => {
-    // Initialize map only once
     if (mapRef.current) return;
 
-    const map = L.map("map").setView([11.9416, 79.8083], 13); // Pondicherry coordinates
+    const map = L.map("map", {
+      zoomControl: false,
+      attributionControl: false
+    }).setView(PONDICHERRY_CENTER, 13);
     mapRef.current = map;
 
-    // Add OpenStreetMap tile layer (replace with Tamil tile layer when available)
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    // Custom subtle attribution
+    L.control.attribution({ position: 'bottomleft' }).addTo(map);
+
+    L.tileLayer(TILE_URL, {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18,
     }).addTo(map);
 
-    // Add a marker for Pondicherry
-    L.marker([11.9416, 79.8083])
-      .addTo(map)
-      .bindPopup("Pondicherry")
-      .openPopup();
+    L.circle(PONDICHERRY_CENTER, {
+      radius: 2200,
+      color: "#b9652f",
+      weight: 1.5,
+      fillColor: "#d58d58",
+      fillOpacity: 0.14,
+    }).addTo(map);
 
-    // Cleanup on unmount
+    L.marker(PONDICHERRY_CENTER)
+      .addTo(map)
+      .bindPopup("<b>Pondicherry / புதுச்சேரி</b><br>Tamil tile server active.");
+
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, []); // Empty dependency array means run once on mount
+  }, []);
+
+  const resetView = () => {
+    if (mapRef.current) {
+      mapRef.current.flyTo(PONDICHERRY_CENTER, 13, { duration: 1.5 });
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div>
-          <h1>Tamil Geo Explorer - Pondicherry</h1>
-          <p>
-            This page will display OpenStreetMap of Pondicherry with labels in
-            Tamil.
-          </p>
-          <div
-            id="map"
-            style={{ height: "500px", width: "100%", marginTop: "20px" }}
-          ></div>
+    <div className="viewer-root">
+      <div id="map"></div>
+      
+      <div className="overlay-ui">
+        <div className="branding">
+          <h1>Tamil Geo Explorer</h1>
+          <p>Pondicherry / புதுச்சேரி</p>
         </div>
-      </section>
-    </>
+        
+        <button onClick={resetView} className="btn-reset" title="Reset to Pondicherry">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          <span>Reset View</span>
+        </button>
+      </div>
+    </div>
   );
 }
 
