@@ -24,3 +24,8 @@ function filter_basic_tags_rel (keyvalues, numberofkeys)
     end
     return 1, keyvalues
 end
+
+-- Function to process relation members (required by newer osm2pgsql versions)
+function filter_tags_relation_member (keyvalues, member_tags, roles, numberofmembers)
+    return 1, keyvalues
+end
