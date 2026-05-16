@@ -1,38 +1,50 @@
 # Tamil Geo Explorer
 
-This project focuses on exploring and rendering OpenStreetMap (OSM) data with Tamil language labels, specifically for the Pondicherry region.
+Tamil Geo Explorer is a React + Leaflet app for viewing Puducherry with Tamil-first OpenStreetMap labels from a local tile server.
+
+This repo includes:
+- a frontend app in `src/`
+- a small Puducherry OSM extract in `maps/`
+- a patched Carto style in `tile-style/` that prefers `name:ta`
+- setup docs for running the full stack locally
+
+## Start Here
+
+If you want to clone this repo and get the Tamil map working locally, use:
+
+- [docs/SETUP.md](docs/SETUP.md)
+
+That guide covers:
+- `npm install`
+- Docker-based OSM import
+- starting the local Tamil tile server
+- running the frontend against the tile server
+
+## How It Works
+
+The frontend does not translate labels by itself.
+
+Tamil labels appear because the local tile server renders tiles from OSM data using a patched Carto Lua transform that replaces `name` with `name:ta` when available.
+
+Current frontend default tile URL:
+
+```text
+http://localhost:8090/tile/{z}/{x}/{y}.png
+```
+
+You can override that at runtime with `VITE_TILE_URL`.
 
 ## Project Structure
 
-- `puducherry.osm.pbf` - OSM data extract for Pondicherry region
-- `scripts/openstreetmap-carto-tamil.lua` - Lua script for osm2pgsql to transform names to Tamil
-- `docs/TAMIL_OSM_GUIDE.md` - Detailed guide on rendering OSM maps in Tamil
-- `src/` - React/Vite application for displaying maps
-
-## Getting Started
-
-### For Map Display (Frontend)
-
-1. Install dependencies: `npm install`
-2. Start development server: `npm run dev`
-3. The React app shows a placeholder for a Tamil OSM map of Pondicherry
-
-### For Tamil OSM Tile Generation (Backend)
-
-Follow the instructions in `docs/TAMIL_OSM_GUIDE.md` to:
-
-1. Set up PostgreSQL/PostGIS database
-2. Process `maps/puducherry.osm.pbf` with `scripts/openstreetmap-carto-tamil.lua` using osm2pgsql
-3. Clone `openstreetmap-carto` separately when you are ready to render tiles
-4. Generate and serve Tamil-labeled map tiles
-5. Update the frontend to use your tile server
-
-## Resources
-
-- Detailed Tamil OSM tutorial: [TAMIL_OSM_GUIDE.md](docs/TAMIL_OSM_GUIDE.md)
+- `src/` - React/Vite frontend
+- `maps/puducherry.osm.pbf` - local OSM extract used for import
+- `tile-style/` - patched Carto render style used by the Docker tile server
+- `docs/SETUP.md` - primary local setup guide
+- `docs/TAMIL_OSM_GUIDE.md` - implementation notes about how the Tamil rendering works in this repo
+- `scripts/openstreetmap-carto-tamil.lua` - original minimal Tamil transform script used during early exploration
 
 ## Notes
 
-- The pondicherry.osm.pbf file is a small extract suitable for learning and experimentation
-- Tamil name coverage depends on the availability of `name:ta` tags in the OSM data
-- For production use, consider using a larger geographic extract (state or country level)
+- `tile-style/data/` is intentionally ignored in Git because it contains downloaded Carto shapefiles that can exceed GitHub's file-size limits
+- not every feature will display in Tamil; features without `name:ta` fall back to the default `name`
+- the checked-in local workflow is Docker-first; older manual PostgreSQL/Mapnik/renderd instructions are no longer the primary path for this repo
