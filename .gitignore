@@ -30,3 +30,6 @@ AGENTS.md
 
 # References
 GUIDES.md
+
+# Local tile renderer artifacts and downloaded external shapefiles
+tile-style/data/
