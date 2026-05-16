@@ -7,6 +7,7 @@ If you want step-by-step setup instructions for a fresh clone, use [SETUP.md](./
 ## What Actually Works In This Repo
 
 The working local setup for this repo is:
+
 - React + Leaflet frontend
 - local Docker tile server using `overv/openstreetmap-tile-server`
 - imported `maps/puducherry.osm.pbf`
@@ -14,6 +15,7 @@ The working local setup for this repo is:
 - frontend tiles loaded from `http://localhost:8090/tile/{z}/{x}/{y}.png`
 
 This is different from the older generic instructions that assumed:
+
 - manual PostgreSQL/PostGIS installation
 - manual `osm2pgsql` commands on the host
 - manual `renderd` and Apache setup outside Docker
@@ -38,6 +40,7 @@ The active Lua transform is:
 - `tile-style/openstreetmap-carto.lua`
 
 The important behavior is:
+
 - if a feature has `name:ta`
 - then the renderer copies it into `name`
 - Carto then renders that Tamil text as the visible label
@@ -51,6 +54,7 @@ We extracted the Carto style used by the Docker tile-server image and kept the n
 - `tile-style/`
 
 Important files there:
+
 - `openstreetmap-carto.lua`
 - `openstreetmap-carto.style`
 - `project.mml`
@@ -68,6 +72,7 @@ Instead, we used the Docker image:
 - `overv/openstreetmap-tile-server:latest`
 
 Import flow:
+
 - mount `maps/puducherry.osm.pbf` into `/data/region.osm.pbf`
 - mount `tile-style/` into `/data/style/`
 - run the image with `import`
@@ -101,12 +106,14 @@ VITE_TILE_URL
 ## Verified Working State
 
 In the working setup, we verified:
+
 - the import completed successfully
 - the local tile server returned PNG tiles from `localhost:8090`
 - Tamil names existed in the imported database
 - the frontend loaded tiles from the local tile server
 
 Examples of imported Tamil names we confirmed:
+
 - `கீழ்புத்துப்பட்டு`
 - `சஞ்சீவி நகர்`
 - `அன்னை நகர்`
@@ -135,6 +142,7 @@ Do not commit:
 - `tile-style/data/`
 
 Why:
+
 - it contains downloaded external Carto shapefiles
 - some files are far above GitHub's 100 MB per-file limit
 - for example, `water_polygons.shp` is about `1.2G`
@@ -144,6 +152,7 @@ That directory is intentionally regenerated locally during the Docker import flo
 ## Stale Instructions Removed From The Current Workflow
 
 These are no longer the main instructions for this repo:
+
 - manually creating the `gis` database on the host
 - manually running `osm2pgsql` outside Docker
 - manually configuring `renderd.conf` on the host
@@ -152,6 +161,13 @@ These are no longer the main instructions for this repo:
 - assuming a fresh clone includes `tile-style/data/`
 
 Those approaches may be valid in general OSM-Carto setups, but they are not the maintained path for this repository.
+
+## References & Credits
+
+- **Original Inspiration**: This demo/learning was made possible by the technical guide shared by [demonshreder](https://www.openstreetmap.org/user/demonshreder) in their **OpenStreetMap Diary**: [Rendering non-default language in OSM-Carto standard map](https://www.openstreetmap.org/user/demonshreder/diary/43956).
+- **osm2pgsql documentation**: https://osm2pgsql.org/doc/
+- **Switch2OSM tutorial**: https://switch2osm.org/
+- **OpenStreetMap Carto**: https://github.com/gravitystorm/openstreetmap-carto
 
 ## Recommended Reading Order
 
