@@ -1,147 +1,160 @@
-# Rendering OSM Maps in Tamil for Pondicherry
+# Tamil OSM Rendering Guide
 
-This guide explains how to process the puducherry.osm.pbf file to generate OSM tiles with Tamil labels.
+This document explains how Tamil map rendering works in this repo and what we changed to make it work locally.
 
-## Overview
+If you want step-by-step setup instructions for a fresh clone, use [SETUP.md](./SETUP.md).
 
-To render OSM maps in Tamil, we need to:
-1. Process the OSM data to replace English names with Tamil names (where available)
-2. Import the processed data into a PostGIS database
-3. Generate map tiles using Mapnik and mod_tile/renderd
-4. Serve the tiles via a web server
+## What Actually Works In This Repo
 
-## Step 1: Prepare the Tamil Lua Script
+The working local setup for this repo is:
+- React + Leaflet frontend
+- local Docker tile server using `overv/openstreetmap-tile-server`
+- imported `maps/puducherry.osm.pbf`
+- patched Carto Lua in `tile-style/openstreetmap-carto.lua`
+- frontend tiles loaded from `http://localhost:8090/tile/{z}/{x}/{y}.png`
 
-We've created `openstreetmap-carto-tamil.lua` which implements the name transformation:
+This is different from the older generic instructions that assumed:
+- manual PostgreSQL/PostGIS installation
+- manual `osm2pgsql` commands on the host
+- manual `renderd` and Apache setup outside Docker
+- cloning `openstreetmap-carto` separately and wiring it by hand
 
-```lua
--- Tamil language OSM Carto Lua script for osm2pgsql
--- This script replaces the 'name' tag with 'name:ta' (Tamil) if available
+Those older instructions are not the primary workflow for this repo anymore.
 
-function filter_tags_node (keyvalues, numberofkeys)
-    if keyvalues["name:ta"] then
-        keyvalues["name"] = keyvalues["name:ta"]
-    end
-    return 1, keyvalues
-end
+## Why Tamil Labels Need A Tile Server
 
-function filter_tags_way (keyvalues, numberofkeys)
-    if keyvalues["name:ta"] then
-        keyvalues["name"] = keyvalues["name:ta"]
-    end
-    return 1, keyvalues
-end
+Leaflet is only displaying pre-rendered raster tiles.
 
-function filter_basic_tags_rel (keyvalues, numberofkeys)
-    if keyvalues["name:ta"] then
-        keyvalues["name"] = keyvalues["name:ta"]
-    end
-    return 1, keyvalues
-end
+The browser does not convert English labels to Tamil on its own. To see Tamil labels, the tile renderer must read OSM data where `name:ta` exists and prefer that value while generating tiles.
+
+## What We Changed
+
+We made Tamil rendering work with these changes:
+
+### 1. Patched Carto Lua
+
+The active Lua transform is:
+
+- `tile-style/openstreetmap-carto.lua`
+
+The important behavior is:
+- if a feature has `name:ta`
+- then the renderer copies it into `name`
+- Carto then renders that Tamil text as the visible label
+
+This is the key reason the final tiles show Tamil labels.
+
+### 2. Local Tile Style Directory
+
+We extracted the Carto style used by the Docker tile-server image and kept the necessary runtime files in:
+
+- `tile-style/`
+
+Important files there:
+- `openstreetmap-carto.lua`
+- `openstreetmap-carto.style`
+- `project.mml`
+- `mapnik.xml`
+- `style/`
+- `symbols/`
+- `patterns/`
+
+### 3. Docker Import Flow
+
+We did not use host-installed `osm2pgsql`, Mapnik, PostgreSQL, or Apache directly.
+
+Instead, we used the Docker image:
+
+- `overv/openstreetmap-tile-server:latest`
+
+Import flow:
+- mount `maps/puducherry.osm.pbf` into `/data/region.osm.pbf`
+- mount `tile-style/` into `/data/style/`
+- run the image with `import`
+
+That builds the PostGIS database, compiles the style, downloads external Carto shapefiles, and prepares the render stack.
+
+### 4. Tile Server Port
+
+The current working local tile server runs on:
+
+```text
+http://localhost:8090/tile/{z}/{x}/{y}.png
 ```
 
-## Step 2: Install Required Software
+We use `8090` because `8080` was already occupied in the working environment by an unrelated service.
 
-You'll need to install:
-- PostgreSQL with PostGIS extension
-- osm2pgsql
-- Mapnik
-- mod_tile and renderd
-- Apache web server (or similar)
+### 5. Frontend Tile URL
 
-## Step 3: Set Up the Database
+The frontend in `src/App.jsx` now defaults to:
 
-```bash
-# As root or with sudo:
-sudo -u postgres createuser mapper
-sudo -u postgres createdb -E UTF8 -O mapper gis
-sudo -u postgres psql -d gis -f /usr/share/postgresql/contrib/postgis-*/postgis.sql
-sudo -u postgres psql -d gis -c "ALTER TABLE spatial_ref_sys OWNER TO mapper;"
-sudo -u postgres psql -d gis -U mapper -f /usr/share/postgresql/contrib/postgis-*/spatial_ref_sys.sql
+```text
+http://localhost:8090/tile/{z}/{x}/{y}.png
 ```
 
-## Step 4: Import the OSM Data with Tamil Names
+It also supports override through:
 
-```bash
-osm2pgsql -d gis --create --slim -G --hstore \\
-  --tag-transform-script ./openstreetmap-carto-tamil.lua \\
-  -C 2500 --number-processes 1 \\
-  ./puducherry.osm.pbf
+```text
+VITE_TILE_URL
 ```
 
-Note: Adjust the `-C` (cache) value based on your available RAM. The pondicherry.osm.pbf file is much smaller than a country or state extract, so you can use a lower cache value.
+## Verified Working State
 
-## Step 5: Set Up Mapnik and Generate Tiles
+In the working setup, we verified:
+- the import completed successfully
+- the local tile server returned PNG tiles from `localhost:8090`
+- Tamil names existed in the imported database
+- the frontend loaded tiles from the local tile server
 
-1. Clone `openstreetmap-carto` outside this repo:
-   ```bash
-   git clone https://github.com/gravitystorm/openstreetmap-carto.git
-   ```
+Examples of imported Tamil names we confirmed:
+- `கீழ்புத்துப்பட்டு`
+- `சஞ்சீவி நகர்`
+- `அன்னை நகர்`
 
-2. Enter the cloned directory and follow its install prerequisites:
-   ```bash
-   cd openstreetmap-carto
-   ```
+## Files You Need To Keep
 
-3. Configure Mapnik to use your database by editing `project.mml` or the datasource settings file expected by your chosen workflow:
-   ```xml
-   <Parameter name="host">localhost</Parameter>
-   <Parameter name="port">5432</Parameter>
-   <Parameter name="dbname">gis</Parameter>
-   <Parameter name="user">mapper</Parameter>
-   <Parameter name="password"></Parameter>
-   <Parameter name="estimate_extent">true</Parameter>
-   ```
+For this repo's working Tamil render path, the important pieces are:
 
-4. Build the Mapnik XML and configure renderd (`/etc/renderd.conf`) to point to the generated style:
-   - Set `tile_dir` and `TILEDIR` to your tile cache directory
-   - Set `num_threads` to the number of processor cores
-   - In the `[mapnik]` section, set `font_dir` to your TTF fonts directory
-   - In the `[default]` section, set `XML` to the generated Mapnik XML from your `openstreetmap-carto` clone
+- `maps/puducherry.osm.pbf`
+- `tile-style/`
+- `src/App.jsx`
+- `docs/SETUP.md`
 
-5. Start renderd:
-   ```bash
-   sudo -u http renderd
-   ```
+The old minimal script is still present for reference:
 
-6. Generate tiles for Pondicherry area:
-   First, find the tile coordinates for Pondicherry at various zoom levels using OpenStreetMap.org, then use render_list:
-   ```bash
-   render_list -z 10 -Z 12 -x <minx> -X <maxx> -y <miny> -Y <maxy>
-   ```
+- `scripts/openstreetmap-carto-tamil.lua`
 
-## Step 6: Serve the Tiles
+But the current working renderer path uses:
 
-Configure your web server (Apache/Nginx) to serve the tile cache directory. Then you can use the tiles in a web map library like Leaflet:
+- `tile-style/openstreetmap-carto.lua`
 
-```javascript
-L.tileLayer('http://your-server/osm_tiles/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tamil labels'
-}).addTo(map);
-```
+## Files You Should Not Commit
 
-## Step 7: View the Tamil Map
+Do not commit:
 
-Once the tiles are generated and served, you can view them in a web browser using a map library like Leaflet, OpenLayers, or Mapbox GL JS.
+- `tile-style/data/`
 
-## Notes
+Why:
+- it contains downloaded external Carto shapefiles
+- some files are far above GitHub's 100 MB per-file limit
+- for example, `water_polygons.shp` is about `1.2G`
 
-- The puducherry.osm.pbf file contains only Pondicherry and surrounding area, so processing will be relatively fast.
-- Tamil name availability: Not all features will have `name:ta` tags. Features without Tamil names will fall back to the default `name` tag (usually in English).
-- For better coverage, consider using a larger extract (like Tamil Nadu or India) if you want more features to have Tamil labels.
+That directory is intentionally regenerated locally during the Docker import flow.
 
-## Troubleshooting
+## Stale Instructions Removed From The Current Workflow
 
-- If you encounter memory issues during osm2pgsql import, try reducing the `-C` cache value or increasing swap space.
-- Ensure all services (PostgreSQL, renderd, Apache) are running.
-- Check logs for errors: `/var/log/daemon.log` or use `journalctl -u renderd` (if using systemd).
+These are no longer the main instructions for this repo:
+- manually creating the `gis` database on the host
+- manually running `osm2pgsql` outside Docker
+- manually configuring `renderd.conf` on the host
+- manually starting Apache/renderd directly on the host
+- assuming `localhost:8080` is the tile server
+- assuming a fresh clone includes `tile-style/data/`
 
-## References
+Those approaches may be valid in general OSM-Carto setups, but they are not the maintained path for this repository.
 
-- osm2pgsql documentation: https://osm2pgsql.org/doc/
-- Switch2OSM tutorial: https://switch2osm.org/
-- OpenStreetMap Carto: https://github.com/gravitystorm/openstreetmap-carto
+## Recommended Reading Order
 
-## Repository Layout Note
-
-This repo does not need to vendor `openstreetmap-carto`. Keep the frontend app, Tamil Lua script, and learning material here, and clone `openstreetmap-carto` separately only when you are doing tile rendering work.
+1. [SETUP.md](./SETUP.md) for local setup
+2. This document for implementation details
+3. `src/App.jsx` and `tile-style/openstreetmap-carto.lua` if you want to modify behavior
